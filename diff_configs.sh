@@ -31,8 +31,8 @@ git checkout "$original_branch"
 echo "========== old debug vs new debug =========="
 diff ../old_debug.config ../new_debug.config --color
 
-echo "========== old generic vs new debug =========="
-diff ../old_debug.config ../new_debug.config --color
+echo "========== old generic vs new generic =========="
+diff ../old_generic.config ../new_generic.config --color
 
 rm ../new_debug.config
 rm ../old_debug.config
