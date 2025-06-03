@@ -1,5 +1,16 @@
 #/bin/bash
 
+# Устанавливаем коммит по умолчанию
+COMMIT="HEAD~1"
+
+# Парсим параметры
+if [ $# -gt 0 ]; then
+    COMMIT="$1"
+    echo "Используем указанный коммит: $COMMIT"
+else
+    echo "Коммит не указан, используем по умолчанию: $COMMIT"
+fi
+
 original_branch=$(git rev-parse --abbrev-ref HEAD)
 debian/rules quilt-push >/dev/null 2>&1
 
@@ -13,7 +24,7 @@ debian/rules clean >/dev/null 2>&1
 yes "" | debian/rules config-debug >/dev/null 2>&1
 cp debian/build/.config ../new_debug.config
 
-git checkout HEAD~1 >/dev/null 2>&1
+git checkout "$COMMIT" >/dev/null 2>&1
 
 echo "OLD GENERIC"
 debian/rules clean >/dev/null 2>&1
