@@ -1,51 +1,55 @@
-#/bin/bash
+#!/bin/bash
 
-# Устанавливаем коммит по умолчанию
-COMMIT="HEAD~1"
+COMMIT="${1:-HEAD~1}"
+TMP_DIR=$(mktemp -d)
 
-# Парсим параметры
-if [ $# -gt 0 ]; then
-    COMMIT="$1"
-    echo "Используем указанный коммит: $COMMIT"
-else
-    echo "Коммит не указан, используем по умолчанию: $COMMIT"
+cleanup() {
+    rm -rf "$TMP_DIR" 2>/dev/null || true
+    git checkout "$original_branch" >/dev/null 2>&1 || true
+    debian/rules quilt-pop >/dev/null 2>&1 || true
+    exit 1
+}
+trap cleanup EXIT INT TERM
+
+if ! git rev-parse --verify "$COMMIT" >/dev/null 2>&1; then
+    echo "Ошибка: коммит $COMMIT не существует"
+    exit 1
 fi
 
-original_branch=$(git rev-parse --abbrev-ref HEAD)
+echo "Используем коммит: $COMMIT ($(git log -1 --format=%s "$COMMIT"))"
+
+original_branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD)
+
+generate_config() {
+    local config_type=$1
+    local output_file=$2
+    
+    debian/rules clean >/dev/null 2>&1
+    yes "" | debian/rules "config-$config_type" >/dev/null 2>&1
+    cp debian/build/.config "$output_file"
+    debian/rules clean >/dev/null 2>&1
+}
+
 debian/rules quilt-push >/dev/null 2>&1
-
 echo "NEW GENERIC"
-debian/rules clean >/dev/null 2>&1
-yes "" | debian/rules config-generic >/dev/null 2>&1
-cp debian/build/.config ../new_generic.config
-
-echo "NEW DEBUG"
-debian/rules clean >/dev/null 2>&1
-yes "" | debian/rules config-debug >/dev/null 2>&1
-cp debian/build/.config ../new_debug.config
+generate_config generic "$TMP_DIR/new_generic.config"
+echo "NEW DEBUG" 
+generate_config debug "$TMP_DIR/new_debug.config"
+debian/rules quilt-pop >/dev/null 2>&1
 
 git checkout "$COMMIT" >/dev/null 2>&1
 
+debian/rules quilt-push >/dev/null 2>&1
 echo "OLD GENERIC"
-debian/rules clean >/dev/null 2>&1
-yes "" | debian/rules config-generic >/dev/null 2>&1
-cp debian/build/.config ../old_generic.config
-
+generate_config generic "$TMP_DIR/old_generic.config"
 echo "OLD DEBUG"
-debian/rules clean >/dev/null 2>&1
-yes "" | debian/rules config-debug >/dev/null 2>&1
-cp debian/build/.config ../old_debug.config
-
+generate_config debug "$TMP_DIR/old_debug.config"
 debian/rules quilt-pop >/dev/null 2>&1
-git checkout "$original_branch"
+
+git checkout "$original_branch" >/dev/null 2>&1
 
 echo "========== old debug vs new debug =========="
-diff ../old_debug.config ../new_debug.config --color
+diff "$TMP_DIR/old_debug.config" "$TMP_DIR/new_debug.config" --color || true
 
-echo "========== old generic vs new generic =========="
-diff ../old_generic.config ../new_generic.config --color
-
-rm ../new_debug.config
-rm ../old_debug.config
-rm ../new_generic.config
-rm ../old_generic.config
+echo "========== old generic vs new generic =========="  
+diff "$TMP_DIR/old_generic.config" "$TMP_DIR/new_generic.config" --color || true
