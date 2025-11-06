@@ -1,5 +1,36 @@
 #!/bin/bash
 
+show_help() {
+    cat << EOF
+Usage: $0 [COMMIT_HASH]
+
+Compare kernel configs between current HEAD and specified commit.
+
+Arguments:
+  COMMIT_HASH    Hash of commit to compare with (default: HEAD~1)
+
+Examples:
+  $0                  # Compare with previous commit (HEAD~1)
+  $0 abc1234          # Compare with commit abc1234
+  $0 HEAD~5           # Compare with 5 commits back
+  $0 origin/main      # Compare with origin/main branch
+
+Description:
+  This script generates kernel configs for both debug and generic variants
+  for current HEAD and specified commit, then shows differences between them.
+
+Environment:
+  Requires debian/rules with config-generic and config-debug targets
+  Requires quilt for patch management
+EOF
+    exit 0
+}
+
+# Показать help если запрошен
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    show_help
+fi
+
 COMMIT="${1:-HEAD~1}"
 TMP_DIR=$(mktemp -d)
 
