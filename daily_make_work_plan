@@ -1,0 +1,15 @@
+#!/bin/bash
+
+/home/$USER/useful_utils/make_work_plan.py
+
+result=$(notify-send -u critical \
+	-A open="Открыть" -A later="Потом" -A done="Уже заполнил" \
+	"Планерка" "Заполним план работы на сегодня?")
+
+if [ "$result" = "open" ]; then
+    nohup /home/tnovikov/apps/obsidian/Obsidian-1.7.7.AppImage > /dev/null 2>&1
+elif [ "$result" = "later" ]; then
+    notify-send -u critical "Напомню через 10 минут" "Заполни план работы!" && sleep 600 && exec "$0"
+elif [ "$result" = "done" ]; then
+    notify-send -u low "Спасибо!" "Хорошего дня!"
+fi
