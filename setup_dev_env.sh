@@ -188,6 +188,7 @@ REPOSITORIES=(
     "lam|https://git.devos.astralinux.ru/AstraOS/parsec/lam"
     "parsec|https://git.devos.astralinux.ru/AstraOS/parsec/parsec"
     "systemd|https://git.devos.astralinux.ru/AstraOS/parsec/systemd"
+    "safepolicy|https://git.devos.astralinux.ru/AstraOS/parsec/astra-safepolicy"
 )
 
 # Клонируем каждый репозиторий
