@@ -154,6 +154,8 @@ PACKAGES=(
         # LAM
         "linux-headers-6.1"
         "linux-headers-6.12"
+        # safepolicy
+        shc
 )
 
 log_info "Установка пакетов..."
